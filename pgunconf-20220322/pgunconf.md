@@ -1,7 +1,9 @@
 ---
 marp: true
+page_number: true
+paginate: true
+class: lead
 ---
-
 # <!-- fit -->作ったツールの紹介
 
 [https://github.com/noborus](https://github.com/noborus)
@@ -10,18 +12,25 @@ marp: true
 
 ---
 
-（一応）PostgreSQLに関連した以下のツールを紹介します。
+
+## PostgreSQLに関連した以下のツールを紹介します
 
 * trdsql
 * ov
 * pgsp
 * jpug-doc-tool
 
-全部Goで書かれています。
+全部Goで書かれたCLIツールです。
 
 ---
 
 ## trdsql
+
+<style scoped>
+    section { 
+        font-size: 300%;
+    }
+</style>
 
 PostgreSQLユーザーにこそ使ってほしいtrdsql
 
@@ -34,7 +43,7 @@ PostgreSQLユーザーにこそ使ってほしいtrdsql
 CSV,LTSV,JSON等にSQLを実行できるツール
 
 ```console
-trdsql "SELECT id, name, price FROM fruits.csv" 
+trdsql -ih "SELECT id, name, price FROM fruits.csv" 
 ```
 
 ```csv
@@ -45,9 +54,7 @@ trdsql "SELECT id, name, price FROM fruits.csv"
 
 同様のツールはいくつか存在する `q`, `textql`...
 
-trdsqlは扱えるフォーマットが豊富、速度が速い等の特徴がある。
-
-さらにDBエンジンを変更できる！
+trdsqlはDBエンジンを変更できる！
 
 ---
 
@@ -158,7 +165,13 @@ trdsql -ih "SELECT count(*) FROM w.csv.zst"
 
 trdsqlの動作として、元々ファイルを指定した場合にテンポラリテーブルを作成して、インポートしている。
 
-そのため、テンポラリテーブルではなく実テーブルを指定する機能を開発しようとするが、機能開発は中止。
+そのため、テンポラリテーブルではなく実テーブルを指定する機能を開発しようとするが、考慮することが爆発的に増える。
+
+* テーブルがすでに存在している場合…
+* 列名を変えたい…
+* 型を定義したい…
+
+機能開発は中止。
 
 ---
 
@@ -167,8 +180,6 @@ SQLで実行すればよいことに気づいた。
 ```console
 trdsql "CREATE TABLE fruits AS SELECT id::int,name,price::int FROM fruits.csv"
 ```
-
-⇒ その結果SQLパーサーは、むしろいい加減な簡易パーサー。
 
 `CREATEE TABLE テーブル AS`の代わりに`INSERT INTO テーブル SELECT`を使用すれば既存のテーブルにもインポート可能。
 
@@ -195,6 +206,7 @@ INSERTを組み立てているようなインポートツールよりも数倍�
 
 trdsqlはJSONL(NDJSON）やトップが配列になっているJSONが対象だった。
 ただ、そこから外れるけど、リスト形式なJSONはよくある。
+
 
 ```json
 {
@@ -223,11 +235,13 @@ trdsqlはJSONL(NDJSON）やトップが配列になっているJSONが対象だ�
 trdsql -omd "SELECT * FROM sample.json"
 ```
 
+```at
 |                                              userList                                              |
 |----------------------------------------------------------------------------------------------------|
 | [{"nickname":"taro","userID":1},{"nickname":"hanoko","userID":2},{"nickname":"momoko","userID":3}] |
+```
 
-前まではSQL関数でなんとかするか、jqで前処理をしてパイプで渡せば良いと考えていた。
+前まではSQLのJSON関数でなんとかするか、jqで前処理をしてパイプで渡せば良いと考えていた。
 
 ```console
 jq ".userList" sample.json | trdsql -omd -ijson "SELECT * FROM -"
@@ -253,16 +267,28 @@ trdsql -omd "SELECT * FROM sample.json::.userList"
 |      3 | momoko   |
 
 ---
+<style scoped>
+    section { 
+        font-size: 300%; 
+    }
+</style>
 
 ⇒ 次のツール
 
-## PostgreSQLの開発当初からあった問題が2021年に進展したのをご存知でしょうか？
+### PostgreSQLの開発当初からあった問題が2021年に進展したのをご存知でしょうか？
 
 それは…
 
 ---
 
-**lessにヘッダーオプションが入った！**
+<style scoped>
+    section { 
+        font-size: 300%; 
+    }
+</style>
+
+### lessにヘッダーオプションが入った！
+
 （まだベータリリース版）
 
 ```console
@@ -273,32 +299,45 @@ less --header 2
 
 lessの前に前提となるPagerの話
 
-## Pager
+### Pager
+<style scoped>
+    section { 
+        font-size: 140%; 
+    }
+</style>
 
 出力をターミナル（エミュレーター）の表示域に合わせて表示するプログラム。
-
-パイプで渡して自分で実行する例。
 
 ```console
 ls | less
 ```
 
-psql,mysqlのようなREPLやいろんなでPagerを呼ぶコマンドが多い。
-最近の方が自動でPagerを呼ぶ傾向が強い。
-(bat, procs, git, gh...)
+のように使用できる。
+
+psqlやmysqlのREPLは自分でパイプに渡せないので内部で使用する。
+
+CLIコマンドでもPagerを呼ぶコマンドが多い。
+（むしろ最近のほうが自動で呼ぶ傾向が強い。bat, procs, git, gh...)
 
 多くは環境変数PAGERで設定されたコマンドを使用する。
 
-Pagerに渡った後はPagerの操作になる⇒psqlを使っていると思っている半分はPagerを操作している。
+Pagerに渡った後はPagerの操作になる
+⇒psqlを使っていると思っている半分はPagerを操作している。
+**psqlにってPagerは大事**
 
 ---
 
-## less
+### less
+
+http://greenwoodsoftware.com/less/
 
 less(1983年〜)はPostgres(1986年〜)よりも前から存在。
 
 psqlのデータ表示に使用されるPAGERはpsql側では規定していないけど、
 lessはPAGERのデファクトスタンダードといえる存在。
+
+いつの間にかGitHubにも置かれていてissue対応してます！
+https://github.com/gwsw/less
 
 1983年からの開発で2021年にヘッダーオプションが入った。
 
@@ -311,7 +350,7 @@ psqlの出力が画面に収まらないと '\x'で縦に表示しろという�
 
 ![width:800px](img/less.png)
 
-（ヘッダーオプションを使用すると折り返さずに横スクロール表示になる）。
+（ヘッダーオプションを使用すると折り返さず横スクロール表示になる）。
 
 ---
 
@@ -321,29 +360,31 @@ psqlの出力が画面に収まらないと '\x'で縦に表示しろという�
 pspgを使用することで、列名を常に表示、列の固定を利用して閲覧できる。
 テーブル表示なので、画面端でも折り返さないで横スクロールして表示する。
 
-![width:800px](img/pspg.png)
+![width:600px](img/pspg.png)
 
 `pspg`はpsqlを想定して作られているので、psqlを使用するならpspgの方が便利。
 
 ---
 
-### ov
+## ov
 
 [https://github.com/noborus/ov](https://github.com/noborus/ov)
 
-私が作った汎用ページャー。
+私が新しく作った汎用ページャー。
 
 1つの表示方法だけでなく、いろんな表示を動的に切り替えられる。
 
 ヘッダー表示しても折返しができるようにした。
-そのため、画面幅に収まらなくても横スクロールしないでも折返し表示しつつ見やすくした。
+画面幅に収まらなくても横スクロールしないで表示できる。
+
+そのために以下の機能を追加。
 
 * 行背景の交互表示
 * 列のハイライト
 
 ---
 
-#### ovは機能盛りだくさん
+### ovは機能盛りだくさん
 
 * 検索 - インクリメンタルサーチ、正規表現のインクリメンタルサーチ
 * フォローモード（tail -f相当）、複数ファイルのフォローモード
@@ -398,13 +439,28 @@ pspg作者のPavel Stehuleさんだけ賛成してくれたけど、他の反応
 ほとんどの開発者は必要としないけど、Pager作る側は必要性を痛感している問題。
 
 ---
+<style scoped>
+    section { 
+        font-size: 300%;
+    }
+</style>
+
 ⇒ 次のツール
 
 ## pgsp
 
-pg_stat_progess_*を表示するだけのシンプルなツール
+https://github.com/noborus/pgsp
 
-pg_stat_progress_* というviewがあって、時間がかかる処理中に情報を返してくれる。
+![width:400px](img/pgsp.png)
+
+---
+
+pg_stat_progess_* という、処理中状況を表すViewを表示するだけの
+シンプルなツール
+
+### 対象View
+
+バージョンによって増えていきますが。以下のViewを対象にしています。
 
 * pg_stat_progress_analyze
 * pg_stat_progress_basebackup
@@ -419,20 +475,56 @@ pg_stat_progress_* というviewがあって、時間がかかる処理中に情
 SELECT * FROM pg_stat_progress_analyze;
 ```
 
-を実行すれば、その時点での状況を教えてくれる。
+実行すれば、その時点での状況を教えてくれる。
+
+```
+  pid  | datid | datname | relid |         phase         | sample_blks_total |  
+   sample_blks_scanned | ext_stats_total | ext_stats_computed | child_tables_total |
+    child_tables_done | current_child_table_relid 
+-------+-------+---------+-------+-----------------------+------------------
+-+---------------------+-----------------+--------------------+-------------------
+-+-------------------+---------------------------
+ 30481 | 16386 | noborus | 25855 | acquiring sample rows |             30000
+  |               21320 |               0 |                  0 |                  0
+   |                 0 |                         0 
+(1 row)
+```
+
+結果はViewによって異なります。
+
+sample_blks_scannedがsample_blks_totalまでいけば、（たぶん）処理終了。
+別のphaseに移って、違うところの数が増えていく場合もある。
+
+---
+
 処理中にはレコードが追加されて、処理が終わるとレコードが消える。
 
 `psql`の`\watch`を使用すれば監視できるが、前述の通り`\watch`はスクロールして流れていくので変化は見づらい。
-PSQL_WATCH_PAGERによって改善するが、totalに対してscannedがいくつか数値を読み解かないとならない。
+
+前述のPSQL_WATCH_PAGERによって改善するかもしれないけど人にやさしくない。
+
+プログレスのViewなんだからプログレスバーを表示する監視ツールがあるでしょう
+⇒無かった。
 
 ---
 
-pgspは`psql`の`watch`の代わりに実行するツール
+### pgspの特徴
 
-1つのviewだけでなく、複数のview（デフォルトは全部）に対して定期的に問い合わせる。
-処理中はわかる範囲でプログレスバーを表示。レコードが消えても指定した秒数間は表示し続ける。
+そこで作ったのが`pgsp`
+
+* 1つのviewだけでなく、複数のview（デフォルトは全部）に対して定期的に問い合わせる。
+* 処理中はわかる範囲でプログレスバーを表示。
+* レコードが消えても指定した秒数間は表示し続ける。
+* ターミナルの表示域（幅、高さ）によって、表示方法を変更。
+* オプションで、監視間隔、終了してから表示し続ける秒数等に対応。
 
 ---
+<style scoped>
+    section { 
+        font-size: 300%; 
+    }
+</style>
+
 ⇒ 次のツール
 
 ## jpug-doc-tool
@@ -460,36 +552,31 @@ PostgreSQLマニュアル翻訳がGitHubに移行してからビルドツール�
 
 ---
 
-## jpug-doc-tool誕生のきっかけ
+### jpug-doc
 
-PostgreSQL 13のマニュアル翻訳は終わらない危機があって、マニュアル内の表の表記法が大きく変わった。
+https://github.com/pgsql-jp/jpug-doc
 
-12までは全部横並びだった。
+PostgreSQLマニュアル翻訳プロジェクトはjpug-docという名前で管理されています。
 
-```
-｜  関数  ｜  戻り値   ｜       説明        ｜       例     ｜
-```
-
-13からは縦に並ぶ表が大きく増えた。
-
-```
-｜ 関数
-｜      説明
-｜      例
-```
-
-説明と例が狭い幅で改行される箇所が多かったため。
-（実はPDFだと幅調整がうまくいかずにはみ出てた）。
+詳しくはQiitaの[PostgreSQL日本語マニュアルについて](https://qiita.com/noborus/items/03f98e43c216d7e23767)を参照してください。
 
 ---
 
-### 12⇒13の変更量が爆発した
+<style scoped>
+    section { 
+        font-size: 130%;
+    }
+</style>
+
+### jpug-doc-tool誕生のきっかけ
+
+PostgreSQL 13のマニュアル翻訳には終わらない危機があった。
+中身は変わらないが表記法が変わって変更量が爆発した。
 
 一番影響が大きかったfunc.sgml。
 
 | バージョンアップ | 変更行数 |
 |:-----------|----------:|
-| 10.0⇒11.0   |     3,493 |
 | 11.0⇒12.0    |    2,168 |
 | 12.0⇒13.0    |   36,575 |
 
@@ -501,31 +588,15 @@ PostgreSQL 13のマニュアル翻訳は終わらない危機があって、マ�
 | 13.0 | 21,153 |
 
 ---
+<style scoped>
+    section {
+        font-size: 130%;
+    }
+</style>
 
 ### 実際の変更例
 
-内容は変わらないが、タグが変わった。
-
-```xml
-    <entry>round</entry>
-    <entry>numeric</entry>
-    <entry>Rounds to nearest integer</entry>
-```
-
-⬇
-
-```xml
-<entry>
-    <para>round</para>
-    <para>numeric</para>
-    <para>
-      Rounds to nearest integer
-    </para>
-</entry>
-```
-
----
-
+内容は変わらないが、タグが変わって、
 13のマニュアルに対して12の翻訳をマージできず
 
 ```xml
@@ -554,29 +625,41 @@ PostgreSQL 13のマニュアル翻訳は終わらない危機があって、マ�
 
 ---
 
-試行錯誤の末、12の版で、外側のタグを省いた英語と日本語のペアのリストを抽出。
+英語と日本語のペアのリストを抽出して、
+新しいバージョンで置き換える方法にした。
 
 ```txt
 en:Rounds to nearest integer
 ja:最も近い整数への丸め
 ```
 
-13の版に英語がマッチしたら、日本語を含めて正規表現で置き換える。
-という方法で解決した。
-
+実装は正規表現バリバリ。
 XML処理系で置き換えようとするとインデントが元に戻せなかった…
 
-数パターンに対応したので、他の人に使えるように体裁を整えたのが`jpug-doc-tool`
+数パターンに対応したので、他の人に使えるように体裁を整えたのが
+`jpug-doc-tool`
 
 ---
 
 ### jpug-doc-toolの変遷
 
-英語と日本語のペアのリストが出せると、タグが同じか、日本語に含まれている英単語が英語にもあるか、数値は同じか等のチェックが可能なのでチェックモードを追加。
+#### チェック機能を追加
+
+英語と日本語のペアのリストにより以下のチェックが可能になった。
+
+* タグが同じか
+* 日本語に含まれている英単語が英語にもあるか
+* 数値は同じか
 
 13の翻訳完了後も数十カ所発見（最近http->https等の修正が多くあった）。
 
-英語の些細な変更により翻訳を適用できないことがあったので、文の類似度を計算して似ている文であれば、注釈付きで置き換えるオプションを追加。
+---
+
+#### 置き換え機能の強化
+
+完全一致の置き換えだけでなく、類似した文に注意書きを入れて置き換え可能に。
+
+`a SQL` ⇒ `an SQL` のような修正は日本語の修正は必要なかった。
 
 さらにAPIを利用した機械翻訳も！
 
@@ -589,7 +672,7 @@ https://mt-auto-minhon-mlt.ucri.jgn-x.jp/
 利用規約にオープンソースライセンスの翻訳に使用できることが明言されている。
 いわゆるAI翻訳で精度も日々向上している。
 
-アカウント作成する必要はありますが、APIも公開している。
+アカウント作成する必要はあるが、APIも公開している。
 
 GoからAPIを利用できるライブラリを作成。
 
@@ -651,3 +734,50 @@ index 7b90452dd8..0c60b2bc79 100644
 
 ---
 
+### 「みんなの自動翻訳」をコマンドで利用
+
+コマンドラインから翻訳ツールとしても使用できる。
+
+```console
+jpug-doc-tool mt "This form is much slower and requires an 
+<literal>ACCESS EXCLUSIVE</literal> lock on each table while it is
+ being processed."
+```
+
+generalNT_en_jaがデフォルトの翻訳エンジンだが、カスタマイズした翻訳エンジンc-1640_en_jaが利用している。
+
+```console
+c-1640_en_ja: この形式は非常に遅く、処理中の各テーブルに
+<literal>ACCESS EXCLUSIVE</literal>ロックを要求します。
+generalNT_en_ja: この形式は非常に遅く、処理中の各テーブルに
+<literal>ACCESS EXCLUSIVE</literal>ロックを要求します。
+```
+
+---
+
+<style scoped>
+    section { 
+        font-size: 170%; 
+    }
+</style>
+
+![bg 50% right](img/end.png)
+
+紹介したツール
+（全部MITライセンスです）
+
+**trdsql**
+https://github.com/noborus/trdsql
+
+**ov**
+https://github.com/noborus/ov
+
+**pgsp**
+https://github.com/noborus/pgsp
+
+**jpug-doc-tool**
+https://github.com/noborus/jpug-doc-tool
+
+みんなの自動翻訳APIクライアント
+Goパッケージ
+https://github.com/noborus/go-textra
