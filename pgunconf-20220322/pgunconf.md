@@ -12,7 +12,6 @@ class: lead
 
 ---
 
-
 ## PostgreSQLに関連した以下のツールを紹介します
 
 * trdsql
@@ -76,51 +75,21 @@ PostgreSQLのSQL構文、SQL関数が使えるのでストレスフリー
 
 ---
 
-### trdsqlの速度
-
-処理時間の多くはDBへのINSERT時間。
-
-sqlite3, MySQLはバルクインサートを使用してINSERTしている。
-
-```log
-2022/03/10 18:04:36 CREATE TEMPORARY TABLE `testdata/test.csv` ( `c1` text, `c2` text );
-2022/03/10 18:04:36 INSERT INTO `testdata/test.csv` (`c1`, `c2`) VALUES (?,?);
-2022/03/10 18:04:36 INSERT INTO `testdata/test.csv` (`c1`, `c2`) VALUES (?,?),(?,?);
-2022/03/10 18:04:36 SELECT * FROM `testdata/test.csv`
-```
-
-PostgreSQLはCOPYを使用している。
-
-```log
-2022/03/10 18:04:22 CREATE TEMPORARY TABLE "testdata/test.csv" ( "c1" text, "c2" text );
-2022/03/10 18:04:22 COPY "testdata/test.csv" ("c1", "c2") FROM STDIN;
-2022/03/10 18:04:22 SELECT * FROM "testdata/test.csv"
-```
-
-（`--debug`オプションをつけると実行しているSQLを出力します。）
-
-実は**PostgreSQLを使用するのが一番速い**。
-（ネットワークによる遅延が無ければ、倍近く速い）
-
----
-
 ### PostgreSQLのインポート、エクスポート
 
-trdsqlはファイルにSQLを実行するだけでなく、もっといろいろ使える。
-
-それは以下の仕様になっているため。
-
-* 接続したデータベースで渡されたSQLをそのまま実行
-（渡すSQLはエスケープ処理の書き換えのみ行う）。
-* 指定したテーブルがファイルでなくてもエラーにしない。
+trdsqlはファイルにSQLを実行するだけでなく、もっと使いみちがある。
 
 ファイルのJOINだけでなく、ファイルとテーブルのJOINも可能。
+
+テーブルだけに対しても実行可能で、SELECT以外のSQLを実行しても問題ありません。
+
+そのため、インポート、エクスポートもできます。
 
 ---
 
 #### エクスポート
 
-そのため既存のテーブルにSQLを実行しても出力可能。
+既存のテーブルにSQLを実行。
 
 ```console
 trdsql -driver postgres -dsn "host='/var/run/postgresql/'" -omd "SELECT * FROM actor"
@@ -133,31 +102,6 @@ trdsql -driver postgres -dsn "host='/var/run/postgresql/'" -omd "SELECT * FROM a
 |        3 | Ed         | Chase        | 2013-05-26T14:47:57Z |
 |        4 | Jennifer   | Davis        | 2013-05-26T14:47:57Z |
 |        5 | Johnny     | Lollobrigida | 2013-05-26T14:47:57Z |
-
----
-
-#### Tips
-
-trdsqlはいろんな圧縮、伸長をサポートしている。
-
-`-out`でファイル名を指定するときに`.zst`を付けると`zstd`で圧縮される。
-
-```console
-trdsql -oh -out w.csv "SELECT * FROM worldcitiespop"
-=> 145MB w.csv
-```
-
-```console
-trdsql -oh -out w.csv.zst "SELECT * FROM worldcitiespop"
-=>  44MB w.csv.zst
-```
-
-trdsqlでは、gzip, bz2, zstd, lz4, xzで圧縮されたファイルは直接指定可能。
-
-```console
-trdsql -ih "SELECT count(*) FROM w.csv.zst"
-=>  3173958
-```
 
 ---
 
@@ -184,21 +128,6 @@ trdsql "CREATE TABLE fruits AS SELECT id::int,name,price::int FROM fruits.csv"
 `CREATEE TABLE テーブル AS`の代わりに`INSERT INTO テーブル SELECT`を使用すれば既存のテーブルにもインポート可能。
 
 `ON CONFLICT DO NOTHING`や`ON CONFLICT DO UPDATE`を使用すれば、専用のインポートツールよりも柔軟なインポートが可能。
-
----
-
-#### インポート速度は？
-
-`ファイル ⇒ テンポラリテーブル ⇒ 実テーブル`
-
-という経緯を辿るため、psqlのCSV COPYよりは遅い。
-
-`ファイル ⇒ テンポラリテーブル`はtrdsqlの内部的にCOPYを使用しているため、そこそこ。
-
-`テンポラリテーブル ⇒ 実テーブル`はPostgreSQL内のサーバー側の処理なので、かなり速い。
-
-トータルでもpsqlのCOPY（ノーマルでは最速）の倍ぐらい。
-INSERTを組み立てているようなインポートツールよりも数倍高速。
 
 ---
 
@@ -297,14 +226,15 @@ less --header 2
 
 ---
 
-lessの前に前提となるPagerの話
-
-### Pager
 <style scoped>
-    section { 
-        font-size: 140%; 
+    section {
+        font-size: 140%;
     }
 </style>
+
+### Pager
+
+lessの前に前提となるPagerの話
 
 出力をターミナル（エミュレーター）の表示域に合わせて表示するプログラム。
 
@@ -312,14 +242,14 @@ lessの前に前提となるPagerの話
 ls | less
 ```
 
-のように使用できる。
+のように使用できる。Pagerはいくつかある。more,less,most...
 
 psqlやmysqlのREPLは自分でパイプに渡せないので内部で使用する。
 
 CLIコマンドでもPagerを呼ぶコマンドが多い。
 （むしろ最近のほうが自動で呼ぶ傾向が強い。bat, procs, git, gh...)
 
-多くは環境変数PAGERで設定されたコマンドを使用する。
+基本的に環境変数PAGERで設定されたコマンドを使用する。
 
 Pagerに渡った後はPagerの操作になる
 ⇒psqlを使っていると思っている半分はPagerを操作している。
@@ -395,8 +325,10 @@ pspgを使用することで、列名を常に表示、列の固定を利用し�
 
 #### PSQL_WATCH_PAGER
 
-psqlの`\watch`はこれまでPAGERに対応していなかったが、開発中のPostgreSQL 15ではPSQL_WATCH_PAGERをセットすればPAGERに出力できる。
-pspgが対応（pspgの作者が入れた）。
+開発中のPostgreSQL 15ではPSQL_WATCH_PAGERという環境変数が追加される予定。
+この変数をセットすれば`\watch`の出力をPAGERに出力できる。
+pspgが対応（pspgの作者が入れた）
+--streamオプションを使う。
 
 `\watch`の出力はスクロールして流れていくので複数行出力しての変化は見づらい。
 先頭からの位置が変わらないと変化に気づきやすい。
@@ -435,8 +367,6 @@ Thu Mar 17 15:53:28 2022 (every 1s)    <------ タイトル
 結果の区切り文字を^L(PageFeed)追加することを提案して、CommitFestにも登録した。
 
 pspg作者のPavel Stehuleさんだけ賛成してくれたけど、他の反応はイマイチ…
-
-ほとんどの開発者は必要としないけど、Pager作る側は必要性を痛感している問題。
 
 ---
 <style scoped>
@@ -503,12 +433,13 @@ sample_blks_scannedがsample_blks_totalまでいけば、（たぶん）処理�
 
 前述のPSQL_WATCH_PAGERによって改善するかもしれないけど人にやさしくない。
 
-プログレスのViewなんだからプログレスバーを表示する監視ツールがあるでしょう
-⇒無かった。
 
 ---
 
 ### pgspの特徴
+
+プログレスのViewなんだからプログレスバーを表示する監視ツールがあるでしょう
+⇒無かった。
 
 そこで作ったのが`pgsp`
 
@@ -647,7 +578,8 @@ XML処理系で置き換えようとするとインデントが元に戻せな�
 
 英語と日本語のペアのリストにより以下のチェックが可能になった。
 
-* タグが同じか
+* 未翻訳の英語だけのパラグラフがないか
+* 英語、日本語訳のタグが同じか
 * 日本語に含まれている英単語が英語にもあるか
 * 数値は同じか
 
@@ -658,8 +590,9 @@ XML処理系で置き換えようとするとインデントが元に戻せな�
 #### 置き換え機能の強化
 
 完全一致の置き換えだけでなく、類似した文に注意書きを入れて置き換え可能に。
+レーベンシュタイン距離によって同一ファイル内の文から類似しているか比較（package https://github.com/agnivade/levenshtein を使用しているだけ）。
 
-`a SQL` ⇒ `an SQL` のような修正は日本語の修正は必要なかった。
+`a SQL` ⇒ `an SQL` のような修正は日本語の修正は必要ない。
 
 さらにAPIを利用した機械翻訳も！
 
@@ -674,7 +607,7 @@ https://mt-auto-minhon-mlt.ucri.jgn-x.jp/
 
 アカウント作成する必要はあるが、APIも公開している。
 
-GoからAPIを利用できるライブラリを作成。
+GoからAPIを利用できるパッケージを作成。
 
 https://github.com/noborus/go-textra
 
@@ -739,19 +672,18 @@ index 7b90452dd8..0c60b2bc79 100644
 コマンドラインから翻訳ツールとしても使用できる。
 
 ```console
-jpug-doc-tool mt "This form is much slower and requires an 
-<literal>ACCESS EXCLUSIVE</literal> lock on each table while it is
- being processed."
+ jpug-doc-tool mt "This is a pen."
 ```
 
-generalNT_en_jaがデフォルトの翻訳エンジンだが、カスタマイズした翻訳エンジンc-1640_en_jaが利用している。
+generalNT_en_jaがデフォルトの翻訳エンジンだが、カスタマイズした翻訳エンジンを追加できる。
 
 ```console
-c-1640_en_ja: この形式は非常に遅く、処理中の各テーブルに
-<literal>ACCESS EXCLUSIVE</literal>ロックを要求します。
-generalNT_en_ja: この形式は非常に遅く、処理中の各テーブルに
-<literal>ACCESS EXCLUSIVE</literal>ロックを要求します。
+c-1640_en_ja: これはペンです。
+generalNT_en_ja: これはペンです。
 ```
+
+自動翻訳の利用は、まだほぼされていない。
+jpug-doc-toolを利用している人が自分以外いない…
 
 ---
 
