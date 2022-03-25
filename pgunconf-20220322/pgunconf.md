@@ -14,10 +14,14 @@ class: lead
 
 ## PostgreSQLに関連した以下のツールを紹介します
 
-* trdsql
-* ov
-* pgsp
-* jpug-doc-tool
+* **trdsql**
+  テキストとデータのツール
+* **ov**
+  ターミナルページャー
+* **pgsp**
+  pg_stat_progress監視ツール
+* **jpug-doc-tool**
+  マニュアル翻訳ツール
 
 全部Goで書かれたCLIツールです。
 
@@ -197,8 +201,8 @@ trdsql -omd "SELECT * FROM sample.json::.userList"
 
 ---
 <style scoped>
-    section { 
-        font-size: 300%; 
+    section {
+        font-size: 300%;
     }
 </style>
 
@@ -211,8 +215,8 @@ trdsql -omd "SELECT * FROM sample.json::.userList"
 ---
 
 <style scoped>
-    section { 
-        font-size: 300%; 
+    section {
+        font-size: 300%;
     }
 </style>
 
@@ -333,7 +337,7 @@ Unixコマンドで言えばpsコマンドを定期的に実行するか、top�
 
 ---
 
-実際に`\watch`を実行した結果がPAGERに渡されると以下のような形式でくる。
+実際に`\watch`を実行した結果がPAGERに渡されると以下のような形式で出力される。
 
 ```
 Thu Mar 17 15:53:27 2022 (every 1s)   <------ タイトル
@@ -465,9 +469,9 @@ https://github.com/noborus/jpug-doc-tool/
 
 ### 自己紹介
 
-PostgreSQLマニュアル翻訳プロジェクトに参加している斉藤です。
+PostgreSQLマニュアルの日本語翻訳プロジェクトに参加している斉藤です。
 
-PostgreSQLマニュアル翻訳がGitHubに移行してからビルドツールの修正等を担当しています。
+PostgreSQLマニュアルの日本語翻訳の管理がGitHubに移行してからビルドツールの修正等以下のことを担当しています。
 
 * UTF-8への変更
 * ビルド環境の修正
@@ -480,13 +484,15 @@ PostgreSQLマニュアル翻訳がGitHubに移行してからビルドツール�
 
 ---
 
-### jpug-doc
+### PostgreSQL日本語マニュアル
 
-https://github.com/pgsql-jp/jpug-doc
+PostgreSQL日本語マニュアル翻訳プロジェクトはjpug-docという名前で管理されています。
 
-PostgreSQLマニュアル翻訳プロジェクトはjpug-docという名前で管理されています。
+[https://github.com/pgsql-jp/jpug-doc](https://github.com/pgsql-jp/jpug-doc)
 
 詳しくはQiitaの[PostgreSQL日本語マニュアルについて](https://qiita.com/noborus/items/03f98e43c216d7e23767)を参照してください。
+
+現在、拡張子はsgmlですが、すべてXML処理系で処理されています。
 
 ---
 
@@ -498,7 +504,7 @@ PostgreSQLマニュアル翻訳プロジェクトはjpug-docという名前で�
 
 ### jpug-doc-tool誕生のきっかけ
 
-PostgreSQL 13のマニュアル翻訳には終わらない危機があった。
+PostgreSQL 13のマニュアルには「翻訳が終わらない危機」があった。
 中身は変わらないが表記法が変わって変更量が爆発した。
 
 一番影響が大きかったfunc.sgml。
@@ -578,6 +584,7 @@ XML処理系で置き換えようとするとインデントが元に戻せな�
 * 未翻訳の英語だけのパラグラフがないか
 * 英語、日本語訳のタグが同じか
 * 日本語に含まれている英単語が英語にもあるか
+* 英語と日本語を指定して両方含まれているか `--en merge --ja マージ`
 * 数値は同じか
 
 13の翻訳完了後も数十カ所発見（最近http->https等の修正が多くあった）。
