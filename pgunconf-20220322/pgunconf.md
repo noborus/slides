@@ -26,6 +26,7 @@ class: lead
 全部Goで書かれたCLIツールです。
 
 ---
+<!-- footer: trdsql -->
 
 ## trdsql
 
@@ -200,6 +201,8 @@ trdsql -omd "SELECT * FROM sample.json::.userList"
 |      3 | momoko   |
 
 ---
+<!-- footer: ov -->
+
 <style scoped>
     section {
         font-size: 300%;
@@ -230,23 +233,11 @@ less --header 2
 
 ---
 
-<style scoped>
-    section {
-        font-size: 140%;
-    }
-</style>
-
 ### Pager
 
-lessはPagerと呼ばれるジャンルのアプリケーションです。
+lessはPagerと呼ばれるジャンルのアプリケーションで、
+画面に収まらない出力を1画面ずつ表示。
 
-出力をターミナル（エミュレーター）の表示域に合わせて表示するプログラム。
-
-```console
-ls | less
-```
-
-のように使用できる。
 Pagerはいくつかある。more,less,most...
 
 psqlやmysqlのREPLは自分でパイプに渡せないので内部で使用する。
@@ -361,7 +352,8 @@ Thu Mar 17 15:53:28 2022 (every 1s)    <------ タイトル
 * 1回目の空行でタイトルが終わって結果がはじまりを表す
 * 2回目の空行で結果の終わりを表す
 
-この結果に依存して表示モードを作るのは辛い…空行が途中で入ったり、空行を取りこぼしたりするとズレて表示が崩れやすい。
+この結果に依存して表示モードを作るのは辛い…
+空行が途中で入ったり、空行を取りこぼしたりするとズレて表示が崩れやすい。
 
 結果の区切り文字を^L(form feed)追加することを提案して、CommitFestにも登録した。
 
@@ -369,6 +361,8 @@ pspg作者のPavel Stehuleさんだけ賛成してくれたけど、他の反応
 ovで\watchが使いやすく表示できるのかは不透明。
 
 ---
+<!-- footer: pgsp -->
+
 <style scoped>
     section { 
         font-size: 300%;
@@ -420,27 +414,29 @@ SELECT * FROM pg_stat_progress_analyze;
 (1 row)
 ```
 
-結果はViewによって異なります。
-
-sample_blks_scannedがsample_blks_totalまでいけば、（たぶん）処理終了。
-別のphaseに移って、違うところの数が増えていく場合もある。
+（結果はViewによって異なる。）
 
 ---
+
+### 問題点
 
 処理中にはレコードが追加されて、処理が終わるとレコードが消える。
 
 `psql`の`\watch`を使用すれば監視できるが、
 前述の通り`\watch`はスクロールして流れていくので変化は見づらい。
 
-前述のPSQL_WATCH_PAGERによって改善するかもしれないけど
-わかっている人向け。
+前述のPSQL_WATCH_PAGERによって改善するかもしれない。
+
+そもそも、わかりやすくない。
 
 ---
 
-### pgspの特徴
+### pgsp
 
 プログレスのViewなんだからプログレスバーを表示する監視ツールを探す
 が無かった⇒そこで作ったのが`pgsp`
+
+#### 特徴
 
 * 1つのviewだけでなく、複数のview（デフォルトは全部）に対して定期的に問い合わせる。
 * 処理中はわかる範囲でプログレスバーを表示。
@@ -448,11 +444,21 @@ sample_blks_scannedがsample_blks_totalまでいけば、（たぶん）処理�
 * ターミナルの表示域（幅、高さ）によって、表示方法を変更。
 * オプションで、監視間隔、終了してから表示し続ける秒数等に対応。
 
+---
+
+### 今後
+
+![bg 70% right](img/bubbletea.png)
+
 GoのTUIフレームワークBubble Teaを使用
+
 https://github.com/charmbracelet/bubbletea
+
 プログレスバー以外にも機能豊富なので、統合監視ツールも作れるかも。
 
 ---
+<!-- footer: jpug-doc-tool -->
+
 <style scoped>
     section { 
         font-size: 300%;
@@ -604,16 +610,23 @@ XML処理系で置き換えようとするとインデントが元に戻せな�
 **さらにAPIを利用した機械翻訳も！**
 
 ---
+<style scoped>
+    section { 
+        font-size: 130%;
+    }
+</style>
 
 ### みんなの自動翻訳＠TexTra
+
+![bg 90% right](img/textra.png)
 
 https://mt-auto-minhon-mlt.ucri.jgn-x.jp/
 
 利用規約にオープンソースライセンスの翻訳に使用できることが明言されている。
+
 いわゆるAI翻訳で精度も日々向上している。
 
-アカウント作成する必要はあるが、APIも公開している。
-
+APIも公開している。
 GoからAPIを利用できるパッケージを作成。
 
 https://github.com/noborus/go-textra
